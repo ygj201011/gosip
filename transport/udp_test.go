@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/ghettovoice/gosip/core"
-	"github.com/ghettovoice/gosip/testutils"
+	"github.com/ghettovoice/gosip/testutil"
 	"github.com/ghettovoice/gosip/timing"
 	"github.com/ghettovoice/gosip/transport"
 	. "github.com/onsi/ginkgo"
@@ -128,46 +128,46 @@ var _ = Describe("UdpProtocol", func() {
 
 		Context("when 3 clients connects and sends data", func() {
 			BeforeEach(func() {
-				client1 = testutils.CreateClient(network, localTarget1.Addr(), clientAddr1)
-				client2 = testutils.CreateClient(network, localTarget2.Addr(), clientAddr2)
-				client3 = testutils.CreateClient(network, localTarget1.Addr(), clientAddr3)
+				client1 = testutil.CreateClient(network, localTarget1.Addr(), clientAddr1)
+				client2 = testutil.CreateClient(network, localTarget2.Addr(), clientAddr2)
+				client3 = testutil.CreateClient(network, localTarget1.Addr(), clientAddr3)
 				wg.Add(3)
 				go func() {
 					defer wg.Done()
 					time.Sleep(time.Millisecond)
-					testutils.WriteToConn(client1, []byte(msg1))
+					testutil.WriteToConn(client1, []byte(msg1))
 				}()
 				go func() {
 					defer wg.Done()
 					time.Sleep(100 * time.Millisecond)
-					testutils.WriteToConn(client2, []byte(msg2))
+					testutil.WriteToConn(client2, []byte(msg2))
 					time.Sleep(200 * time.Millisecond)
-					testutils.WriteToConn(client2, []byte(bullshit))
+					testutil.WriteToConn(client2, []byte(bullshit))
 					time.Sleep(200 * time.Millisecond)
-					testutils.WriteToConn(client2, []byte(msg2))
+					testutil.WriteToConn(client2, []byte(msg2))
 				}()
 				go func() {
 					defer wg.Done()
 					time.Sleep(50 * time.Millisecond)
-					testutils.WriteToConn(client3, []byte(broken))
+					testutil.WriteToConn(client3, []byte(broken))
 					time.Sleep(100 * time.Millisecond)
-					testutils.WriteToConn(client3, []byte(msg3))
+					testutil.WriteToConn(client3, []byte(msg3))
 				}()
 			})
 			It("should pipe incoming messages and errors", func(done Done) {
 				By(fmt.Sprintf("msg1 arrives on output from client1 %s -> %s", client1.LocalAddr().String(), localTarget1.Addr()))
-				testutils.AssertMessageArrived(output, fmt.Sprintf(expectedMsg1, client1.LocalAddr().(*net.UDPAddr).IP), client1.LocalAddr().String(), "far-far-away.com:5060")
+				testutil.AssertMessageArrived(output, fmt.Sprintf(expectedMsg1, client1.LocalAddr().(*net.UDPAddr).IP), client1.LocalAddr().String(), "far-far-away.com:5060")
 				By(fmt.Sprintf("broken message arrives from client3 and ignored %s -> %s", client3.LocalAddr().String(), localTarget1.Addr()))
 				time.Sleep(time.Millisecond)
 				By(fmt.Sprintf("msg2 arrives on output from client2 %s -> %s", client2.LocalAddr().String(), localTarget2.Addr()))
-				testutils.AssertMessageArrived(output, fmt.Sprintf(expectedMsg2, client1.LocalAddr().(*net.UDPAddr).IP), client2.LocalAddr().String(), "far-far-away.com:5060")
+				testutil.AssertMessageArrived(output, fmt.Sprintf(expectedMsg2, client1.LocalAddr().(*net.UDPAddr).IP), client2.LocalAddr().String(), "far-far-away.com:5060")
 				By(fmt.Sprintf("msg3 arrives on output from client3 %s -> %s", client3.LocalAddr().String(), localTarget1.Addr()))
 				// here we should check actual client remote address, because SIP Response gets Remote Address from connection
-				testutils.AssertMessageArrived(output, msg3, client3.(*testutils.MockConn).Conn.LocalAddr().String(), "pc33.example.com:5060")
+				testutil.AssertMessageArrived(output, msg3, client3.(*testutil.MockConn).Conn.LocalAddr().String(), "pc33.example.com:5060")
 				By(fmt.Sprintf("bullshit arrives from client2 and ignored %s -> %s", client2.LocalAddr().String(), localTarget2.Addr()))
 				time.Sleep(time.Millisecond)
 				By(fmt.Sprintf("msg2 arrives on output from client2 %s -> %s", client2.LocalAddr().String(), localTarget2.Addr()))
-				testutils.AssertMessageArrived(output, fmt.Sprintf(expectedMsg2, client1.LocalAddr().(*net.UDPAddr).IP), client2.LocalAddr().String(), "far-far-away.com:5060")
+				testutil.AssertMessageArrived(output, fmt.Sprintf(expectedMsg2, client1.LocalAddr().(*net.UDPAddr).IP), client2.LocalAddr().String(), "far-far-away.com:5060")
 				//for i := 0; i < 4; i++ {
 				//	select {
 				//	case msg := <-output:
@@ -184,14 +184,14 @@ var _ = Describe("UdpProtocol", func() {
 			var server1 net.PacketConn
 			var err error
 			BeforeEach(func() {
-				client1 = testutils.CreateClient(network, localTarget1.Addr(), clientAddr1)
+				client1 = testutil.CreateClient(network, localTarget1.Addr(), clientAddr1)
 				server1, err = net.ListenPacket(network, clientAddr1)
 				Expect(err).ToNot(HaveOccurred())
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
 					time.Sleep(100 * time.Millisecond)
-					testutils.WriteToConn(client1, []byte(msg1))
+					testutil.WriteToConn(client1, []byte(msg1))
 				}()
 			})
 			AfterEach(func() {
@@ -199,7 +199,7 @@ var _ = Describe("UdpProtocol", func() {
 			})
 			It("should receive message and response with 200 OK", func(done Done) {
 				By("msg1 arrives")
-				testutils.AssertMessageArrived(output, fmt.Sprintf(expectedMsg1, client1.LocalAddr().(*net.UDPAddr).IP), client1.LocalAddr().String(), "far-far-away.com:5060")
+				testutil.AssertMessageArrived(output, fmt.Sprintf(expectedMsg1, client1.LocalAddr().(*net.UDPAddr).IP), client1.LocalAddr().String(), "far-far-away.com:5060")
 
 				By("prepare response 200 OK")
 				clientTarget, err := transport.NewTargetFromAddr(clientAddr1)

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/ghettovoice/gosip/core"
-	"github.com/ghettovoice/gosip/testutils"
+	"github.com/ghettovoice/gosip/testutil"
 	"github.com/ghettovoice/gosip/transport"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -68,13 +68,13 @@ var _ = Describe("TransportLayer", func() {
 				"Hello world!"
 
 			BeforeEach(func() {
-				client = testutils.CreateClient(network, localAddr1, clientAddr)
+				client = testutil.CreateClient(network, localAddr1, clientAddr)
 				server, err = net.ListenPacket(network, clientAddr)
 				Expect(err).ToNot(HaveOccurred())
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					testutils.WriteToConn(client, []byte(msg))
+					testutil.WriteToConn(client, []byte(msg))
 				}()
 			})
 			AfterEach(func() {
@@ -83,7 +83,7 @@ var _ = Describe("TransportLayer", func() {
 			})
 
 			It("should process request (add 'received' param) and emit on Message chan", func(done Done) {
-				testutils.AssertMessageArrived(tpl.Messages(), fmt.Sprintf(expectedMsg, clientHost), clientAddr,
+				testutil.AssertMessageArrived(tpl.Messages(), fmt.Sprintf(expectedMsg, clientHost), clientAddr,
 					"far-far-away.com:5060")
 				close(done)
 			}, 3)
@@ -93,7 +93,7 @@ var _ = Describe("TransportLayer", func() {
 				var response core.Message
 
 				BeforeEach(func() {
-					incomingRequest = testutils.AssertMessageArrived(tpl.Messages(), fmt.Sprintf(expectedMsg, clientHost),
+					incomingRequest = testutil.AssertMessageArrived(tpl.Messages(), fmt.Sprintf(expectedMsg, clientHost),
 						clientAddr, "far-far-away.com:5060")
 					response = core.NewResponseFromRequest(
 						incomingRequest.(core.Request),
@@ -147,12 +147,12 @@ var _ = Describe("TransportLayer", func() {
 				"Hello world!"
 
 			BeforeEach(func() {
-				client = testutils.CreateClient(network, localAddr1, "")
+				client = testutil.CreateClient(network, localAddr1, "")
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
 					time.Sleep(100 * time.Millisecond)
-					testutils.WriteToConn(client, []byte(msg))
+					testutil.WriteToConn(client, []byte(msg))
 				}()
 			})
 			AfterEach(func() {
@@ -160,7 +160,7 @@ var _ = Describe("TransportLayer", func() {
 			})
 
 			It("should process request (add 'received' param) and emit on Message chan", func(done Done) {
-				testutils.AssertMessageArrived(tpl.Messages(), fmt.Sprintf(expectedMsg, clientHost), client.LocalAddr().String(),
+				testutil.AssertMessageArrived(tpl.Messages(), fmt.Sprintf(expectedMsg, clientHost), client.LocalAddr().String(),
 					"far-far-away.com:5060")
 				close(done)
 			}, 3)
@@ -170,7 +170,7 @@ var _ = Describe("TransportLayer", func() {
 				var response core.Message
 
 				BeforeEach(func() {
-					incomingRequest = testutils.AssertMessageArrived(tpl.Messages(), fmt.Sprintf(expectedMsg, clientHost),
+					incomingRequest = testutil.AssertMessageArrived(tpl.Messages(), fmt.Sprintf(expectedMsg, clientHost),
 						client.LocalAddr().String(), "far-far-away.com:5060")
 					response = core.NewResponseFromRequest(
 						incomingRequest.(core.Request),

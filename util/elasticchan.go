@@ -4,7 +4,7 @@ package util
 import "github.com/ghettovoice/gosip/log"
 
 // The buffer size of the primitive input and output chans.
-const c_ELASTIC_CHANSIZE = 3
+const cElasticChanSize = 3
 
 // A dynamic channel that does not block on send, but has an unlimited buffer capacity.
 // ElasticChan uses a dynamic slice to buffer signals received on the input channel until
@@ -20,8 +20,8 @@ type ElasticChan struct {
 
 // Initialise the Elastic channel, and start the management goroutine.
 func (c *ElasticChan) Init() {
-	c.In = make(chan interface{}, c_ELASTIC_CHANSIZE)
-	c.Out = make(chan interface{}, c_ELASTIC_CHANSIZE)
+	c.In = make(chan interface{}, cElasticChanSize)
+	c.Out = make(chan interface{}, cElasticChanSize)
 	c.buffer = make([]interface{}, 0)
 	c.logger = log.NewSafeLocalLogger()
 	c.done = make(chan struct{})

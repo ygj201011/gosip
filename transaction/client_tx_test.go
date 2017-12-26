@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/ghettovoice/gosip/core"
-	"github.com/ghettovoice/gosip/testutils"
+	"github.com/ghettovoice/gosip/testutil"
 	"github.com/ghettovoice/gosip/transaction"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -13,7 +13,7 @@ import (
 
 var _ = Describe("ClientTx", func() {
 	var (
-		tpl *testutils.MockTransportLayer
+		tpl *testutil.MockTransportLayer
 		txl transaction.Layer
 	)
 
@@ -21,7 +21,7 @@ var _ = Describe("ClientTx", func() {
 	clientAddr := "localhost:9001"
 
 	BeforeEach(func() {
-		tpl = testutils.NewMockTransportLayer()
+		tpl = testutil.NewMockTransportLayer()
 		txl = transaction.NewLayer(tpl)
 	})
 	AfterEach(func(done Done) {
