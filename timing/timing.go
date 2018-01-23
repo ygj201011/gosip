@@ -1,3 +1,4 @@
+// Package timing wraps std time package to provide `Timer` interface for easy mocking.
 // Forked from github.com/StefanKopieczek/gossip by @StefanKopieczek
 package timing
 

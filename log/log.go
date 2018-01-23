@@ -1,3 +1,5 @@
+// Package log provides log functions with different levels,
+// wraps and extends logrus package functionality.
 package log
 
 import (
@@ -31,6 +33,7 @@ func init() {
 	logrus.SetFormatter(NewFormatter(true, false))
 }
 
+// SetFormatter sets provided formatter in std logger.
 func SetFormatter(formatter logrus.Formatter) {
 	logrus.SetFormatter(formatter)
 }
@@ -48,18 +51,22 @@ type LocalLogger interface {
 	SetLog(logger Logger)
 }
 
+// StandardLogger returns std logger instance.
 func StandardLogger() logrus.FieldLogger {
 	return logrus.StandardLogger()
 }
 
+// SetOutput changes std logger output.
 func SetOutput(out io.Writer) {
 	logrus.SetOutput(out)
 }
 
+// SetLevel changes std logger level.
 func SetLevel(level logrus.Level) {
 	logrus.SetLevel(level)
 }
 
+// GetLevel returns std logger current level.
 func GetLevel() logrus.Level {
 	return logrus.GetLevel()
 }
@@ -214,6 +221,7 @@ type safeLocalLogger struct {
 	mu *sync.RWMutex
 }
 
+// NewSafeLocalLogger creates new thread-safe LocalLogger.
 func NewSafeLocalLogger() LocalLogger {
 	return &safeLocalLogger{
 		Logger: StandardLogger(),
@@ -221,12 +229,14 @@ func NewSafeLocalLogger() LocalLogger {
 	}
 }
 
+// Log returns internal wrapped logger instance. Method is safe to use in multiple goroutines.
 func (l *safeLocalLogger) Log() Logger {
 	l.mu.RLock()
 	defer l.mu.RUnlock()
 	return l.Logger
 }
 
+// SetLog updates internal wrapped logger instance. Method is safe to use in multiple goroutines.
 func (l *safeLocalLogger) SetLog(logger Logger) {
 	l.mu.Lock()
 	defer l.mu.Unlock()

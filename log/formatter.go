@@ -31,6 +31,7 @@ func NewFormatter(shortNames bool, forceColors bool) *Formatter {
 	}
 }
 
+// The Formatter interface is used to implement a custom Formatter. It takes an `Entry`.
 func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
 	// merge "file", "line", "func" entry field to prefix for pretty format
 	undef := "???"

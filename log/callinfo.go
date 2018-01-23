@@ -19,6 +19,7 @@ const (
 type CallInfoHook struct {
 }
 
+// NewCallInfoHook creates new `CallInfoHook`.
 func NewCallInfoHook() *CallInfoHook {
 	return &CallInfoHook{}
 }
@@ -34,11 +35,12 @@ func (hook *CallInfoHook) Fire(entry *logrus.Entry) error {
 	return nil
 }
 
-// Levels returns CallInfoHook working levels.
+// Levels returns `CallInfoHook` working levels.
 func (hook *CallInfoHook) Levels() []logrus.Level {
 	return logrus.AllLevels
 }
 
+// GetStackInfo returns file, line and function name from runtime call stack.
 func GetStackInfo() (string, string, string) {
 	// Get information about the stack.
 	// Try and find the first stack frame outside the logging package.
