@@ -61,13 +61,8 @@ func (conn *connection) String() string {
 		return "<nil>"
 	}
 
-	return fmt.Sprintf(
-		"Connection %p (net %s, laddr %v, raddr %v)",
-		conn,
-		conn.Network(),
-		conn.LocalAddr(),
-		conn.RemoteAddr(),
-	)
+	return fmt.Sprintf("%T %p (net: %s, laddr: %v, raddr: %v)", conn, conn, conn.Network(), conn.LocalAddr(),
+		conn.RemoteAddr())
 }
 
 func (conn *connection) Log() log.Logger {
@@ -229,7 +224,7 @@ func (err *ConnectionError) Error() string {
 		return "<nil>"
 	}
 
-	s := "ConnectionError"
+	s := fmt.Sprintf("%T", err)
 	if err.Conn != nil {
 		s += " [" + err.Conn.String() + "]"
 	}

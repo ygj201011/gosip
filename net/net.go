@@ -7,6 +7,70 @@ import (
 	"net"
 )
 
+// Generic network packet.
+type Packet interface {
+	String() string
+	Data() []byte
+	Length() int
+	Net() string
+	Source() string
+	SetSource(src string)
+	Destination() string
+	SetDestination(dest string)
+}
+
+type packet struct {
+	data []byte
+	net  string
+	src  string
+	dest string
+}
+
+// NewPacket creates new instance of Packet type.
+func NewPacket(net string, data []byte) Packet {
+	return &packet{
+		net:  net,
+		data: data,
+	}
+}
+
+func (pkt *packet) String() string {
+	if pkt == nil {
+		return "<nil>"
+	}
+
+	return fmt.Sprintf("%T %p (net: %s, len: %d, src: %s, dest: %s)", pkt, pkt, pkt.Net(), pkt.Source(),
+		pkt.Destination(), pkt.Length())
+}
+
+func (pkt *packet) Data() []byte {
+	return pkt.data
+}
+
+func (pkt *packet) Length() int {
+	return len(pkt.data)
+}
+
+func (pkt *packet) Net() string {
+	return pkt.net
+}
+
+func (pkt *packet) Source() string {
+	return pkt.src
+}
+
+func (pkt *packet) SetSource(src string) {
+	pkt.src = src
+}
+
+func (pkt *packet) Destination() string {
+	return pkt.dest
+}
+
+func (pkt *packet) SetDestination(dest string) {
+	pkt.dest = dest
+}
+
 // Error is a generic network level error.
 type Error interface {
 	net.Error
@@ -44,65 +108,26 @@ func IsTemporaryError(err error) bool {
 	return false
 }
 
-// Generic network packet.
-type Packet interface {
-	String() string
-	Data() []byte
-	Length() int
-	Net() string
-	Source() string
-	SetSource(src string)
-	Destination() string
-	SetDestination(dest string)
+// PoolError is an pool operation error.
+type PoolError struct {
+	Err  error
+	Op   string
+	Pool string
 }
 
-type packet struct {
-	data []byte
-	net  string
-	src  string
-	dest string
-}
-
-// NewPacket creates new instance of Packet type.
-func NewPacket(net string, data []byte) Packet {
-	return &packet{
-		net:  net,
-		data: data,
-	}
-}
-
-func (pkt *packet) String() string {
-	if pkt == nil {
+func (err *PoolError) Network() bool   { return false }
+func (err *PoolError) Timeout() bool   { return false }
+func (err *PoolError) Temporary() bool { return false }
+func (err *PoolError) Error() string {
+	if err == nil {
 		return "<nil>"
 	}
 
-	return fmt.Sprintf("Packet %p (net %s, src %s, dest %s, len %d)", pkt, pkt.Net(), pkt.Source(), pkt.Destination(), pkt.Length())
-}
+	s := fmt.Sprintf("%T %s", err, err.Op)
+	if err.Pool != "" {
+		s += " [" + err.Pool + "]"
+	}
+	s += ": " + err.Err.Error()
 
-func (pkt *packet) Data() []byte {
-	return pkt.data
-}
-
-func (pkt *packet) Length() int {
-	return len(pkt.data)
-}
-
-func (pkt *packet) Net() string {
-	return pkt.net
-}
-
-func (pkt *packet) Source() string {
-	return pkt.src
-}
-
-func (pkt *packet) SetSource(src string) {
-	pkt.src = src
-}
-
-func (pkt *packet) Destination() string {
-	return pkt.dest
-}
-
-func (pkt *packet) SetDestination(dest string) {
-	pkt.dest = dest
+	return s
 }

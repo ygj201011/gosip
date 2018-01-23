@@ -9,15 +9,16 @@ import (
 
 	"github.com/ghettovoice/gosip/core"
 	"github.com/ghettovoice/gosip/log"
+	"github.com/ghettovoice/gosip/repository"
 	"github.com/ghettovoice/gosip/syntax"
 	"github.com/ghettovoice/gosip/timing"
 	"github.com/ghettovoice/gosip/util"
 )
 
-// ConnectionKey represents unique key for Connection in the pool.
-type ConnectionKey string
+// ConnKey represents unique key for Connection in the pool.
+type ConnKey string
 
-func (key ConnectionKey) String() string {
+func (key ConnKey) String() string {
 	return string(key)
 }
 
@@ -25,60 +26,33 @@ func (key ConnectionKey) String() string {
 type ConnectionPool interface {
 	log.LocalLogger
 	core.Deferred
-	String() string
-	Put(key ConnectionKey, connection Connection, ttl time.Duration) error
-	Get(key ConnectionKey) (Connection, error)
-	All() []Connection
-	Drop(key ConnectionKey) error
-	DropAll() error
-	Length() int
-}
-
-type connectionRequest struct {
-	keys        []ConnectionKey
-	connections []Connection
-	ttls        []time.Duration
-	response    chan *connectionResponse
-}
-type connectionResponse struct {
-	connections []Connection
-	errs        []error
+	repository.Repository
+	PutConn(key ConnKey, conn Connection, ttl time.Duration) error
+	GetConn(key ConnKey) (Connection, error)
+	AllConns() []Connection
+	DropConn(key ConnKey) error
 }
 
 // ConnectionPool implementation.
 type connectionPool struct {
-	logger  log.LocalLogger
-	hwg     *sync.WaitGroup
-	store   map[ConnectionKey]ConnectionHandler
-	keys    []ConnectionKey
-	output  chan<- Packet
-	errs    chan<- error
-	cancel  <-chan struct{}
-	done    chan struct{}
-	hmess   chan Packet
-	herrs   chan error
-	gets    chan *connectionRequest
-	updates chan *connectionRequest
-	drops   chan *connectionRequest
-	mu      *sync.RWMutex
+	pool
+	output chan<- Packet
+	hmess  chan Packet
+	herrs  chan error
 }
 
 func NewConnectionPool(output chan<- Packet, errs chan<- error, cancel <-chan struct{}) ConnectionPool {
 	pool := &connectionPool{
-		logger:  log.NewSafeLocalLogger(),
-		hwg:     new(sync.WaitGroup),
-		store:   make(map[ConnectionKey]ConnectionHandler),
-		keys:    make([]ConnectionKey, 0),
-		output:  output,
-		errs:    errs,
-		cancel:  cancel,
-		done:    make(chan struct{}),
-		hmess:   make(chan Packet),
-		herrs:   make(chan error),
-		gets:    make(chan *connectionRequest),
-		updates: make(chan *connectionRequest),
-		drops:   make(chan *connectionRequest),
-		mu:      new(sync.RWMutex),
+		pool: pool{
+			LocalLogger: log.NewSafeLocalLogger(),
+			hwg:         new(sync.WaitGroup),
+			errs:        errs,
+			cancel:      cancel,
+			done:        make(chan struct{}),
+		},
+		output: output,
+		hmess:  make(chan Packet),
+		herrs:  make(chan error),
 	}
 
 	go pool.serveStore()
@@ -87,25 +61,9 @@ func NewConnectionPool(output chan<- Packet, errs chan<- error, cancel <-chan st
 	return pool
 }
 
-func (pool *connectionPool) String() string {
-	return fmt.Sprintf("ConnectionPool %p", pool)
-}
-
-func (pool *connectionPool) Log() log.Logger {
-	return pool.logger.Log()
-}
-
-func (pool *connectionPool) SetLog(logger log.Logger) {
-	pool.logger.SetLog(logger.WithField("conn-pool", pool.String()))
-}
-
-func (pool *connectionPool) Done() <-chan struct{} {
-	return pool.done
-}
-
 // Put adds new connection to pool or updates TTL of existing connection.
 // TTL - 0 - unlimited; 1 - ... - time to live in pool
-func (pool *connectionPool) Put(key ConnectionKey, connection Connection, ttl time.Duration) error {
+func (pool *connectionPool) PutConn(key ConnKey, conn Connection, ttl time.Duration) error {
 	select {
 	case <-pool.cancel:
 		return &PoolError{fmt.Errorf("%s canceled", pool), "put connection", pool.String()}
@@ -116,7 +74,7 @@ func (pool *connectionPool) Put(key ConnectionKey, connection Connection, ttl ti
 	}
 
 	response := make(chan *connectionResponse)
-	req := &connectionRequest{[]ConnectionKey{key}, []Connection{connection},
+	req := &connectionRequest{[]ConnKey{key}, []Connection{conn},
 		[]time.Duration{ttl}, response}
 
 	pool.Log().Debugf("send put request %#v", req)
@@ -130,7 +88,7 @@ func (pool *connectionPool) Put(key ConnectionKey, connection Connection, ttl ti
 	return nil
 }
 
-func (pool *connectionPool) Get(key ConnectionKey) (Connection, error) {
+func (pool *connectionPool) Get(key ConnKey) (Connection, error) {
 	select {
 	case <-pool.cancel:
 		return nil, &PoolError{fmt.Errorf("%s canceled", pool), "get connection", pool.String()}
@@ -138,7 +96,7 @@ func (pool *connectionPool) Get(key ConnectionKey) (Connection, error) {
 	}
 
 	response := make(chan *connectionResponse)
-	req := &connectionRequest{[]ConnectionKey{key}, nil, nil, response}
+	req := &connectionRequest{[]ConnKey{key}, nil, nil, response}
 
 	pool.Log().Debugf("send get request %#v", req)
 	pool.gets <- req
@@ -147,7 +105,7 @@ func (pool *connectionPool) Get(key ConnectionKey) (Connection, error) {
 	return res.connections[0], res.errs[0]
 }
 
-func (pool *connectionPool) Drop(key ConnectionKey) error {
+func (pool *connectionPool) Drop(key ConnKey) error {
 	select {
 	case <-pool.cancel:
 		return &PoolError{fmt.Errorf("%s canceled", pool), "drop connection", pool.String()}
@@ -155,7 +113,7 @@ func (pool *connectionPool) Drop(key ConnectionKey) error {
 	}
 
 	response := make(chan *connectionResponse)
-	req := &connectionRequest{[]ConnectionKey{key}, nil, nil, response}
+	req := &connectionRequest{[]ConnKey{key}, nil, nil, response}
 
 	pool.Log().Debugf("send drop request %#v", req)
 	pool.drops <- req
@@ -314,13 +272,13 @@ func (pool *connectionPool) serveHandlers() {
 	}
 }
 
-func (pool *connectionPool) allKeys() []ConnectionKey {
+func (pool *connectionPool) allKeys() []ConnKey {
 	pool.mu.RLock()
 	defer pool.mu.RUnlock()
-	return append([]ConnectionKey{}, pool.keys...)
+	return append([]ConnKey{}, pool.keys...)
 }
 
-func (pool *connectionPool) put(key ConnectionKey, conn Connection, ttl time.Duration) error {
+func (pool *connectionPool) put(key ConnKey, conn Connection, ttl time.Duration) error {
 	if _, err := pool.get(key); err == nil {
 		return &PoolError{fmt.Errorf("%s already has key %s", pool, key),
 			"put connection", pool.String()}
@@ -344,7 +302,7 @@ func (pool *connectionPool) put(key ConnectionKey, conn Connection, ttl time.Dur
 	return nil
 }
 
-func (pool *connectionPool) drop(key ConnectionKey, cancel bool) error {
+func (pool *connectionPool) drop(key ConnKey, cancel bool) error {
 	// check existence in pool
 	handler, err := pool.get(key)
 	if err != nil {
@@ -370,7 +328,7 @@ func (pool *connectionPool) drop(key ConnectionKey, cancel bool) error {
 	return nil
 }
 
-func (pool *connectionPool) get(key ConnectionKey) (ConnectionHandler, error) {
+func (pool *connectionPool) get(key ConnKey) (ConnectionHandler, error) {
 	pool.mu.RLock()
 	defer pool.mu.RUnlock()
 
@@ -382,7 +340,7 @@ func (pool *connectionPool) get(key ConnectionKey) (ConnectionHandler, error) {
 		"get connection", pool.String()}
 }
 
-func (pool *connectionPool) getConnection(key ConnectionKey) (Connection, error) {
+func (pool *connectionPool) getConnection(key ConnKey) (Connection, error) {
 	var conn Connection
 	handler, err := pool.get(key)
 	if err == nil {
@@ -438,7 +396,7 @@ type ConnectionHandler interface {
 	core.Cancellable
 	core.Deferred
 	String() string
-	Key() ConnectionKey
+	Key() ConnKey
 	Connection() Connection
 	// Expiry returns connection expiry time.
 	Expiry() time.Time
@@ -453,7 +411,7 @@ type ConnectionHandler interface {
 // ConnectionHandler implementation.
 type connectionHandler struct {
 	logger     log.LocalLogger
-	key        ConnectionKey
+	key        ConnKey
 	connection Connection
 	timer      timing.Timer
 	ttl        time.Duration
@@ -467,7 +425,7 @@ type connectionHandler struct {
 }
 
 func NewConnectionHandler(
-	key ConnectionKey,
+	key ConnKey,
 	conn Connection,
 	ttl time.Duration,
 	output chan<- Packet,
@@ -530,7 +488,7 @@ func (handler *connectionHandler) SetLog(logger log.Logger) {
 	handler.logger.SetLog(logger)
 }
 
-func (handler *connectionHandler) Key() ConnectionKey {
+func (handler *connectionHandler) Key() ConnKey {
 	return handler.key
 }
 

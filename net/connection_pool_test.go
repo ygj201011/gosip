@@ -72,7 +72,7 @@ var _ = Describe("ConnectionHandler", func() {
 		})
 
 		HasCorrectKeyAndConn := func() {
-			It("should have ConnectionKey", func() {
+			It("should have ConnKey", func() {
 				Expect(handler.Key()).To(Equal(key))
 			})
 			It("should have transport.Connection", func() {
