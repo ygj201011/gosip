@@ -1,4 +1,4 @@
-package transport
+package net
 
 import (
 	"fmt"
@@ -16,7 +16,7 @@ var (
 	writeTimeout        = 30 * time.Second
 )
 
-// Wrapper around net.Conn.
+// Connection is an extended `net.Conn`.
 type Connection interface {
 	net.Conn
 	log.LocalLogger
@@ -35,9 +35,8 @@ type connection struct {
 	mu       *sync.RWMutex
 }
 
-func NewConnection(
-	baseConn net.Conn,
-) Connection {
+// NewConnection creates new `Connection`.
+func NewConnection(baseConn net.Conn) Connection {
 	var stream bool
 	switch baseConn.(type) {
 	case net.PacketConn:
@@ -59,7 +58,7 @@ func NewConnection(
 
 func (conn *connection) String() string {
 	if conn == nil {
-		return "Connection <nil>"
+		return "<nil>"
 	}
 
 	return fmt.Sprintf(
@@ -122,7 +121,7 @@ func (conn *connection) Read(buf []byte) (int, error) {
 			conn.Network(),
 			fmt.Sprintf("%v", conn.RemoteAddr()),
 			fmt.Sprintf("%v", conn.LocalAddr()),
-			conn.String(),
+			conn,
 		}
 	}
 
@@ -153,7 +152,7 @@ func (conn *connection) Write(buf []byte) (int, error) {
 			conn.Network(),
 			fmt.Sprintf("%v", conn.RemoteAddr()),
 			fmt.Sprintf("%v", conn.LocalAddr()),
-			conn.String(),
+			conn,
 		}
 	}
 
@@ -188,7 +187,7 @@ func (conn *connection) Close() error {
 			conn.Network(),
 			"",
 			"",
-			conn.String(),
+			conn,
 		}
 	}
 
@@ -210,4 +209,44 @@ func (conn *connection) SetReadDeadline(t time.Time) error {
 
 func (conn *connection) SetWriteDeadline(t time.Time) error {
 	return conn.baseConn.SetWriteDeadline(t)
+}
+
+// Connection level error.
+type ConnectionError struct {
+	Err    error
+	Op     string
+	Net    string
+	Source string
+	Dest   string
+	Conn   Connection
+}
+
+func (err *ConnectionError) EOF() bool       { return IsEOFError(err.Err) }
+func (err *ConnectionError) Timeout() bool   { return IsTimeoutError(err.Err) }
+func (err *ConnectionError) Temporary() bool { return IsTemporaryError(err.Err) }
+func (err *ConnectionError) Error() string {
+	if err == nil {
+		return "<nil>"
+	}
+
+	s := "ConnectionError"
+	if err.Conn != nil {
+		s += " [" + err.Conn.String() + "]"
+	}
+	s += " " + err.Op
+	if err.Source != "" {
+		s += " " + err.Source
+	}
+	if err.Dest != "" {
+		if err.Source != "" {
+			s += "->"
+		} else {
+			s += " "
+		}
+		s += err.Dest
+	}
+
+	s += ": " + err.Err.Error()
+
+	return s
 }

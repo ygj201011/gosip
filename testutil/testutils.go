@@ -9,46 +9,6 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func CreateStreamClientServer(network string, addr string) (net.Conn, net.Conn) {
-	network = strings.ToLower(network)
-	ln, err := net.Listen(network, addr)
-	if err != nil {
-		Fail(err.Error())
-	}
-
-	ch := make(chan net.Conn)
-	go func() {
-		defer ln.Close()
-		if server, err := ln.Accept(); err == nil {
-			ch <- server
-		} else {
-			Fail(err.Error())
-		}
-	}()
-
-	client, err := net.Dial(network, ln.Addr().String())
-	if err != nil {
-		Fail(err.Error())
-	}
-
-	return client, <-ch
-}
-
-func CreatePacketClientServer(network string, addr string) (net.Conn, net.Conn) {
-	network = strings.ToLower(network)
-	server, err := net.ListenPacket(network, addr)
-	if err != nil {
-		Fail(err.Error())
-	}
-
-	client, err := net.Dial(network, server.LocalAddr().String())
-	if err != nil {
-		Fail(err.Error())
-	}
-
-	return client, server.(net.Conn)
-}
-
 func CreateClient(network string, raddr string, laddr string) net.Conn {
 	var la, ra net.Addr
 	var err error

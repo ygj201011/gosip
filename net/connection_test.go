@@ -1,12 +1,11 @@
-package transport_test
+package net_test
 
 import (
 	"fmt"
 	"sync"
 
 	"github.com/ghettovoice/gosip/log"
-	"github.com/ghettovoice/gosip/testutil"
-	"github.com/ghettovoice/gosip/transport"
+	"github.com/ghettovoice/gosip/net"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -15,12 +14,12 @@ var _ = Describe("Connection", func() {
 	Describe("construct", func() {
 		Context("from net.UDPConn", func() {
 			It("should set connection params", func() {
-				cUdpConn, sUdpConn := testutil.CreatePacketClientServer("udp", localAddr1)
+				cUdpConn, sUdpConn := createPacketClientServer("udp", localAddr1)
 				defer func() {
 					cUdpConn.Close()
 					sUdpConn.Close()
 				}()
-				conn := transport.NewConnection(sUdpConn)
+				conn := net.NewConnection(sUdpConn)
 
 				Expect(conn.Network()).To(Equal("UDP"))
 				Expect(conn.Streamed()).To(BeFalse(), "UDP should be non-streamed")
@@ -34,12 +33,12 @@ var _ = Describe("Connection", func() {
 
 		Context("from net.TCPConn", func() {
 			It("should set connection params", func() {
-				cTcpConn, sTcpConn := testutil.CreateStreamClientServer("tcp", localAddr1)
+				cTcpConn, sTcpConn := createStreamClientServer("tcp", localAddr1)
 				defer func() {
 					cTcpConn.Close()
 					sTcpConn.Close()
 				}()
-				conn := transport.NewConnection(sTcpConn)
+				conn := net.NewConnection(sTcpConn)
 
 				Expect(conn.Network()).To(Equal("TCP"))
 				Expect(conn.Streamed()).To(BeTrue())
@@ -58,14 +57,14 @@ var _ = Describe("Connection", func() {
 
 		Context("with net.UDPConn", func() {
 			It("should read and write data", func() {
-				cUdpConn, sUdpConn := testutil.CreatePacketClientServer("udp", localAddr1)
+				cUdpConn, sUdpConn := createPacketClientServer("udp", localAddr1)
 				defer func() {
 					cUdpConn.Close()
 					sUdpConn.Close()
 				}()
 
-				sConn := transport.NewConnection(sUdpConn)
-				cConn := transport.NewConnection(cUdpConn)
+				sConn := net.NewConnection(sUdpConn)
+				cConn := net.NewConnection(cUdpConn)
 
 				wg := new(sync.WaitGroup)
 				wg.Add(1)

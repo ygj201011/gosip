@@ -1,4 +1,4 @@
-package transport
+package net
 
 import (
 	"fmt"
@@ -14,13 +14,14 @@ import (
 	"github.com/ghettovoice/gosip/util"
 )
 
+// ConnectionKey represents unique key for Connection in the pool.
 type ConnectionKey string
 
 func (key ConnectionKey) String() string {
 	return string(key)
 }
 
-// ConnectionPool used for active connection management.
+// ConnectionPool used for active connections management.
 type ConnectionPool interface {
 	log.LocalLogger
 	core.Deferred
@@ -31,25 +32,6 @@ type ConnectionPool interface {
 	Drop(key ConnectionKey) error
 	DropAll() error
 	Length() int
-}
-
-// ConnectionHandler serves associated connection, i.e. parses
-// incoming data, manages expiry time & etc.
-type ConnectionHandler interface {
-	log.LocalLogger
-	core.Cancellable
-	core.Deferred
-	String() string
-	Key() ConnectionKey
-	Connection() Connection
-	// Expiry returns connection expiry time.
-	Expiry() time.Time
-	Expired() bool
-	// Update updates connection expiry time.
-	// TODO put later to allow runtime update
-	//Update(conn Connection, ttl time.Duration)
-	// Manage runs connection serving.
-	Serve(done func())
 }
 
 type connectionRequest struct {
@@ -63,16 +45,17 @@ type connectionResponse struct {
 	errs        []error
 }
 
+// ConnectionPool implementation.
 type connectionPool struct {
 	logger  log.LocalLogger
 	hwg     *sync.WaitGroup
 	store   map[ConnectionKey]ConnectionHandler
 	keys    []ConnectionKey
-	output  chan<- core.Message
+	output  chan<- Packet
 	errs    chan<- error
 	cancel  <-chan struct{}
 	done    chan struct{}
-	hmess   chan core.Message
+	hmess   chan Packet
 	herrs   chan error
 	gets    chan *connectionRequest
 	updates chan *connectionRequest
@@ -80,7 +63,7 @@ type connectionPool struct {
 	mu      *sync.RWMutex
 }
 
-func NewConnectionPool(output chan<- core.Message, errs chan<- error, cancel <-chan struct{}) ConnectionPool {
+func NewConnectionPool(output chan<- Packet, errs chan<- error, cancel <-chan struct{}) ConnectionPool {
 	pool := &connectionPool{
 		logger:  log.NewSafeLocalLogger(),
 		hwg:     new(sync.WaitGroup),
@@ -90,7 +73,7 @@ func NewConnectionPool(output chan<- core.Message, errs chan<- error, cancel <-c
 		errs:    errs,
 		cancel:  cancel,
 		done:    make(chan struct{}),
-		hmess:   make(chan core.Message),
+		hmess:   make(chan Packet),
 		herrs:   make(chan error),
 		gets:    make(chan *connectionRequest),
 		updates: make(chan *connectionRequest),
@@ -120,7 +103,7 @@ func (pool *connectionPool) Done() <-chan struct{} {
 	return pool.done
 }
 
-// Put adds new connection to pool or updates TTL of existing connection
+// Put adds new connection to pool or updates TTL of existing connection.
 // TTL - 0 - unlimited; 1 - ... - time to live in pool
 func (pool *connectionPool) Put(key ConnectionKey, connection Connection, ttl time.Duration) error {
 	select {
@@ -449,7 +432,25 @@ func (pool *connectionPool) handleDrop(req *connectionRequest) {
 	req.response <- res
 }
 
-// connectionHandler actually serves associated connection
+// ConnectionHandler serves associated connection, watches for expiry time & etc.
+type ConnectionHandler interface {
+	log.LocalLogger
+	core.Cancellable
+	core.Deferred
+	String() string
+	Key() ConnectionKey
+	Connection() Connection
+	// Expiry returns connection expiry time.
+	Expiry() time.Time
+	Expired() bool
+	// Update updates connection expiry time.
+	// TODO put later to allow runtime update
+	//Update(conn Connection, ttl time.Duration)
+	// Manage runs connection serving.
+	Serve(done func())
+}
+
+// ConnectionHandler implementation.
 type connectionHandler struct {
 	logger     log.LocalLogger
 	key        ConnectionKey
@@ -457,7 +458,7 @@ type connectionHandler struct {
 	timer      timing.Timer
 	ttl        time.Duration
 	expiry     time.Time
-	output     chan<- core.Message
+	output     chan<- Packet
 	errs       chan<- error
 	cancel     <-chan struct{}
 	canceled   chan struct{}
@@ -469,7 +470,7 @@ func NewConnectionHandler(
 	key ConnectionKey,
 	conn Connection,
 	ttl time.Duration,
-	output chan<- core.Message,
+	output chan<- Packet,
 	errs chan<- error,
 	cancel <-chan struct{},
 ) ConnectionHandler {
@@ -592,8 +593,8 @@ func (handler *connectionHandler) Serve(done func()) {
 	handler.pipeOutputs(msgs, errs)
 }
 
-func (handler *connectionHandler) readConnection() (<-chan core.Message, <-chan error) {
-	msgs := make(chan core.Message)
+func (handler *connectionHandler) readConnection() (<-chan Packet, <-chan error) {
+	msgs := make(chan Packet)
 	errs := make(chan error)
 	streamed := handler.Connection().Streamed()
 	parser := syntax.NewParser(msgs, errs, streamed)
@@ -654,7 +655,7 @@ func (handler *connectionHandler) readConnection() (<-chan core.Message, <-chan 
 	return msgs, errs
 }
 
-func (handler *connectionHandler) pipeOutputs(msgs <-chan core.Message, errs <-chan error) {
+func (handler *connectionHandler) pipeOutputs(msgs <-chan Packet, errs <-chan error) {
 	streamed := handler.Connection().Streamed()
 	getRemoteAddr := func() string {
 		if streamed {
