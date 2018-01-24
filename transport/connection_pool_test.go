@@ -1,4 +1,4 @@
-package net
+package transport_test
 
 import (
 	"fmt"
@@ -72,7 +72,7 @@ var _ = Describe("ConnectionHandler", func() {
 		})
 
 		HasCorrectKeyAndConn := func() {
-			It("should have ConnKey", func() {
+			It("should have ConnectionKey", func() {
 				Expect(handler.Key()).To(Equal(key))
 			})
 			It("should have transport.Connection", func() {

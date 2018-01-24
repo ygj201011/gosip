@@ -10,7 +10,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Connection", func() {
+var _ = Describe("Conn", func() {
 	Describe("construct", func() {
 		Context("from net.UDPConn", func() {
 			It("should set connection params", func() {
@@ -19,7 +19,7 @@ var _ = Describe("Connection", func() {
 					cUdpConn.Close()
 					sUdpConn.Close()
 				}()
-				conn := net.NewConnection(sUdpConn)
+				conn := net.NewConn(sUdpConn)
 
 				Expect(conn.Network()).To(Equal("UDP"))
 				Expect(conn.Streamed()).To(BeFalse(), "UDP should be non-streamed")
@@ -38,7 +38,7 @@ var _ = Describe("Connection", func() {
 					cTcpConn.Close()
 					sTcpConn.Close()
 				}()
-				conn := net.NewConnection(sTcpConn)
+				conn := net.NewConn(sTcpConn)
 
 				Expect(conn.Network()).To(Equal("TCP"))
 				Expect(conn.Streamed()).To(BeTrue())
@@ -63,8 +63,8 @@ var _ = Describe("Connection", func() {
 					sUdpConn.Close()
 				}()
 
-				sConn := net.NewConnection(sUdpConn)
-				cConn := net.NewConnection(cUdpConn)
+				sConn := net.NewConn(sUdpConn)
+				cConn := net.NewConn(cUdpConn)
 
 				wg := new(sync.WaitGroup)
 				wg.Add(1)
