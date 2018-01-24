@@ -5,7 +5,23 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"time"
 )
+
+const (
+	netErrRetryTime = 5 * time.Second
+	sockTTL         = time.Hour
+)
+
+// Protocol implements network specific features.
+type Protocol interface {
+	String() string
+	Network() string
+	Reliable() bool
+	Streamed() bool
+	Listen(addr string) error
+	Send(addr string, data []byte) error
+}
 
 // Generic network packet.
 type Packet interface {
@@ -106,28 +122,4 @@ func IsTemporaryError(err error) bool {
 		return err.Temporary()
 	}
 	return false
-}
-
-// PoolError is an pool operation error.
-type PoolError struct {
-	Err  error
-	Op   string
-	Pool string
-}
-
-func (err *PoolError) Network() bool   { return false }
-func (err *PoolError) Timeout() bool   { return false }
-func (err *PoolError) Temporary() bool { return false }
-func (err *PoolError) Error() string {
-	if err == nil {
-		return "<nil>"
-	}
-
-	s := fmt.Sprintf("%T %s", err, err.Op)
-	if err.Pool != "" {
-		s += " [" + err.Pool + "]"
-	}
-	s += ": " + err.Err.Error()
-
-	return s
 }

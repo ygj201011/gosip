@@ -245,3 +245,6 @@ func (err *ConnError) Error() string {
 
 	return s
 }
+
+type ConnReader interface {
+}
