@@ -5,7 +5,6 @@ import (
 )
 
 type concurrent struct {
-	repository
 	items cmap.ConcurrentMap
 }
 
@@ -15,6 +14,14 @@ func NewConcurrent() Repository {
 		items: cmap.New(),
 	}
 	return repo
+}
+
+func (repo *concurrent) String() string {
+	return Stringify(repo)
+}
+
+func (repo *concurrent) Len() int {
+	return repo.items.Count()
 }
 
 func (repo *concurrent) Keys() []string {

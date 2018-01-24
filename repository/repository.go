@@ -32,11 +32,7 @@ func New() Repository {
 }
 
 func (repo *repository) String() string {
-	if repo == nil {
-		return "<nil>"
-	}
-
-	return fmt.Sprintf("%T (len: %d)", repo, repo.Len())
+	return Stringify(repo)
 }
 
 func (repo *repository) Len() int {
@@ -99,4 +95,12 @@ func (repo *repository) Pop(key string) (interface{}, bool) {
 		return item, ok
 	}
 	return nil, false
+}
+
+func Stringify(repo Repository) string {
+	if repo == nil {
+		return "<nil>"
+	}
+
+	return fmt.Sprintf("%T (len: %d)", repo, repo.Len())
 }

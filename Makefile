@@ -20,11 +20,11 @@ test-%:
 
 test-watch:
 	cd $$GOPATH/src/$(PKG_NAME); \
-	ginkgo watch -r --trace --race $(GOFLAGS)
+	ginkgo watch -r --randomizeAllSpecs --randomizeSuites --cover --trace --race --compilers=2 --progress $(GOFLAGS)
 
 test-watch-%:
 	cd $$GOPATH/src/$(PKG_NAME); \
-	ginkgo watch -r --trace --race $(GOFLAGS) ./$*
+	ginkgo watch -r --randomizeAllSpecs --cover --trace --race --compilers=2 --progress $(GOFLAGS) ./$*
 
 format:
 	cd $$GOPATH/src/$(PKG_NAME); \
