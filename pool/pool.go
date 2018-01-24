@@ -17,7 +17,7 @@ type pool struct {
 
 func New() Pool {
 	return &pool{
-		Repository: repository.NewMemory(),
+		Repository: repository.NewConcurrent(),
 	}
 }
 
