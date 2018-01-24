@@ -29,3 +29,7 @@ test-watch-%:
 format:
 	cd $$GOPATH/src/$(PKG_NAME); \
 	go fmt -w *.go
+
+run-doc-%:
+	cd $$GOPATH/src/${PKG_NAME}; \
+	godoc -http ":$*"

@@ -10,20 +10,8 @@ import (
 
 var _ = Describe("Concurrent repository", func() {
 	var repo Repository
+
 	input := behaviorInput{}
-
-	BeforeEach(func() {
-		repo = NewConcurrent()
-		input.repo = repo
-	})
-	AfterEach(func() {
-		input = behaviorInput{}
-	})
-
-	Context("when just initialized", func() {
-		BeEmptyBehavior(&input)
-	})
-
 	items1 := map[string]interface{}{
 		"one":   "first",
 		"two":   "second",
@@ -37,11 +25,25 @@ var _ = Describe("Concurrent repository", func() {
 		"two":   "second",
 		"three": "third",
 	}
+
+	BeforeEach(func() {
+		repo = NewConcurrent()
+		input.repo = repo
+	})
+	AfterEach(func() {
+		repo = nil
+		input = behaviorInput{}
+	})
+
+	Context("when just initialized", func() {
+		BeEmptyBehavior(&input)
+	})
+
 	Context(fmt.Sprintf("when items added: %v", items1), func() {
 		BeforeEach(func() {
-			input.items = items1
+			input.expectedItems = items1
 			input.key = "three"
-			input.expected = items1[input.key]
+			input.expectedItem = items1[input.key]
 			for k, v := range items1 {
 				repo.Put(k, v)
 			}
@@ -53,7 +55,7 @@ var _ = Describe("Concurrent repository", func() {
 
 		Context("drop item with key 'two'", func() {
 			BeforeEach(func() {
-				input.items = items2
+				input.expectedItems = items2
 				input.key = "two"
 				repo.Drop("two")
 			})
@@ -68,7 +70,7 @@ var _ = Describe("Concurrent repository", func() {
 			var ok bool
 
 			BeforeEach(func() {
-				input.items = items3
+				input.expectedItems = items3
 				input.key = "one"
 				it, ok = repo.Pop("one")
 				Expect(ok).To(BeTrue())

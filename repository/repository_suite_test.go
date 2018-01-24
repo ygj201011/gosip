@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/ghettovoice/gosip/collutil"
+	"github.com/ghettovoice/gosip/collection"
 	. "github.com/ghettovoice/gosip/repository"
 	. "github.com/ghettovoice/gosip/test"
 	. "github.com/onsi/ginkgo"
@@ -16,48 +16,54 @@ func TestRepository(t *testing.T) {
 }
 
 type behaviorInput struct {
-	repo     Repository
-	items    map[string]interface{}
-	key      string
-	expected interface{}
+	repo           Repository
+	key            string
+	expectedItem   interface{}
+	expectedItems  map[string]interface{}
+	expectedLength int
+	expectedKeys   []string
 }
 
 func BeEmptyBehavior(input *behaviorInput) {
 	It("should be empty", func() {
-		Expect(input.repo.Len()).To(Equal(0))
-		Expect(input.repo.Keys()).To(HaveLen(0))
+		ExpectWithOffset(1, input.repo.Len()).To(Equal(0))
+		ExpectWithOffset(1, input.repo.Keys()).To(HaveLen(0))
 	})
 }
 
 func HaveLengthBehavior(input *behaviorInput) {
-	It(fmt.Sprintf("should have length = %d", len(input.items)), func() {
-		Expect(input.repo.Len()).To(Equal(len(input.items)))
-		Expect(input.repo.Keys()).To(HaveLen(len(input.items)))
+	It(fmt.Sprintf("should have length = %d", input.expectedLength), func() {
+		ExpectWithOffset(1, input.repo.Len()).To(Equal(input.expectedLength))
+		ExpectWithOffset(1, input.repo.Keys()).To(HaveLen(input.expectedLength))
 	})
 }
 
 func HaveItemsBehavior(input *behaviorInput) {
-	It(fmt.Sprintf("should have items: %+v", input.items), func() {
-		Expect(input.repo.Items()).To(ConsistOf(collutil.Vals(input.items)))
-		Expect(input.repo.All()).To(ConsistOf(collutil.Vals(input.items)))
+	It(fmt.Sprintf("should have items: %+v", input.expectedItems), func() {
+		ExpectWithOffset(1, input.repo.Items()).To(ConsistOf(collection.Vals(input.expectedItems)))
+		ExpectWithOffset(1, input.repo.All()).To(ConsistOf(collection.Vals(input.expectedItems)))
 	})
-	It(fmt.Sprintf("should have keys: %v", collutil.Keys(input.items)), func() {
-		Expect(input.repo.Keys()).To(ConsistOf(collutil.Keys(input.items)))
+	It(fmt.Sprintf("should have keys: %v", collection.Keys(input.expectedItems)), func() {
+		ExpectWithOffset(1, input.repo.Keys()).To(ConsistOf(collection.Keys(input.expectedItems)))
 	})
 }
 
 func ItemFoundBehaviour(input *behaviorInput) {
 	It(fmt.Sprintf("should find item by key %s", input.key), func() {
+		ExpectWithOffset(1, input.repo.Has(input.key)).To(BeTrue())
+
 		item, ok := input.repo.Get(input.key)
-		Expect(ok).To(BeTrue())
-		Expect(item).To(Equal(input.expected))
+		ExpectWithOffset(1, ok).To(BeTrue())
+		ExpectWithOffset(1, item).To(Equal(input.expectedItem))
 	})
 }
 
 func ItemNotFoundBehaviour(input *behaviorInput) {
 	It(fmt.Sprintf("should not find item by key %s", input.key), func() {
+		ExpectWithOffset(1, input.repo.Has(input.key)).ToNot(BeTrue())
+
 		item, ok := input.repo.Get(input.key)
-		Expect(ok).To(BeFalse())
-		Expect(item).To(BeNil())
+		ExpectWithOffset(1, ok).To(BeFalse())
+		ExpectWithOffset(1, item).To(BeNil())
 	})
 }

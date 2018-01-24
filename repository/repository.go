@@ -5,16 +5,27 @@ import "fmt"
 
 // Repository introduces generic repository.
 type Repository interface {
+	// String returns string representation of the repository.
 	String() string
+	// Len returns number of items in the repository.
 	Len() int
+	// Keys returns slice of all existent keys in the repository.
 	Keys() []string
+	// Has checks if provided key exists in repository.
 	Has(key string) bool
+	// Put inserts new items or updates existent key.
 	Put(key string, item interface{})
+	// Get returns items by key and bool flag to check search success.
 	Get(key string) (interface{}, bool)
+	// Items returns copy of map of all repository items.
 	Items() map[string]interface{}
+	// All returns all repository items as slice.
 	All() []interface{}
+	// Drop drops item.
 	Drop(key string)
+	// Clear drops all items from repository.
 	Clear()
+	// Pop extracts items by key and drops it.
 	Pop(key string) (interface{}, bool)
 }
 
@@ -32,7 +43,7 @@ func New() Repository {
 }
 
 func (repo *repository) String() string {
-	return Stringify(repo)
+	return ToString(repo)
 }
 
 func (repo *repository) Len() int {
@@ -67,7 +78,7 @@ func (repo *repository) Items() map[string]interface{} {
 }
 
 func (repo *repository) All() []interface{} {
-	items := make([]interface{}, 0)
+	items := make([]interface{}, 0, repo.Len())
 	for _, item := range repo.items {
 		items = append(items, item)
 	}
@@ -97,7 +108,8 @@ func (repo *repository) Pop(key string) (interface{}, bool) {
 	return nil, false
 }
 
-func Stringify(repo Repository) string {
+// ToString simple helper function that converts repository to string representation.
+func ToString(repo Repository) string {
 	if repo == nil {
 		return "<nil>"
 	}

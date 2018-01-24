@@ -17,7 +17,7 @@ func NewConcurrent() Repository {
 }
 
 func (repo *concurrent) String() string {
-	return Stringify(repo)
+	return ToString(repo)
 }
 
 func (repo *concurrent) Len() int {
