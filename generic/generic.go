@@ -1,31 +1,76 @@
-// Package collection provides a set of generic functions to work with collections (arrays, slices and maps).
-package collection
+// Package generic provides a set of generic functions to work with collections (arrays, slices, maps and chans).
+package generic
 
-import "reflect"
+import (
+	"fmt"
+	"reflect"
+)
 
 // Iteratee represents function that is called for each element of an collection.
 // Function should have one, two or three input arguments and one or two output argument.
+// The second iteratee output always expected to be error, that indicates early break of the loop.
 //
-// There are two common patters of iteratee function expected:
+// There are several common iteratee patterns expected:
 //
-//		// Map-like iteratee with one or two inputs of any type and one or two outputs.
-//		// Type of the second output value expected to be of error type.
+// 1. Map-like iteratee with one or two inputs of any type and one or two outputs. The second output expected to be of
+// error type.
+//		// pseudo-code
+//		func(val Any [, key Any]) (out Any [, err error])
+//		// examples
 //		func(val int, key string) int { return val }
 //		func(val string) (int, error) { return strconv.Atoi(val) }
 //
-//		// Reduce-like iteratee with two or three inputs and one or two outputs.
-//		// Type of the second output value expected to be of error type.
-//		func(all []string, val string, key int) ([]string, error) { return append(all, fmt.Sprintf("%d = %s", key, val)), nil }
+// 2. Filter-like iteratee with one or two inputs of any type and one or two outputs. The first output expected to be
+// of bool type. The second output expected to be of error type.
+//		// pseudo-code
+//		func(val Any [, key Any]) (ok bool [, err error])
+//		// examples
+//		func(val int, key string) int { return val }
+//		func(val string) (int, error) { return strconv.Atoi(val) }
+//
+// 3. Reduce-like iteratee with two or three inputs and one or two outputs. The second output expected to be
+// of error type.
+//		// pseudo-code
+//		func(res Any, val Any [, key Any]) (out Any [, err error])
+//		// examples
+//		func(all []string, val string, key int) (string, error) { return all + fmt.Sprintf(" -> %d = %s", key, val)), nil }
 //		func(all []float32, val float32) []float32 { return append(all, val * 2) }
 type Iteratee interface{}
+
+// Common iteratees written in pseudo-code.
+const (
+	PseudoMapLikeIteratee    = "func(val Any [, key Any]) (out Any [, err error])"
+	PseudoFilterLikeIteratee = "func(val Any [, key Any]) (ok bool [, err error])"
+	PseudoReduceLikeIteratee = "func(res Any, val Any [, key Any]) (out Any [, err error])"
+)
 
 // Collection represents a slice, array or map.
 type Collection interface{}
 
+// Pointer represents a pointer to result.
+type Pointer interface{}
+
 // Any represents value of any type.
 type Any interface{}
 
-var collectionKinds = []reflect.Kind{reflect.Array, reflect.Slice, reflect.Map, reflect.String}
+var collectionKinds = []reflect.Kind{reflect.Array, reflect.Slice, reflect.Map, reflect.Chan}
+var collectionPtrKinds []string
+
+func init() {
+	for _, kind := range collectionKinds {
+		collectionPtrKinds = append(collectionPtrKinds, fmt.Sprintf("*%s", kind))
+	}
+}
+
+// CollectionKinds returns slice of supported collection kinds.
+func CollectionKinds() []reflect.Kind {
+	return append([]reflect.Kind{}, collectionKinds...)
+}
+
+// CollectionPtrKinds returns list of supported collection pointers.
+func CollectionPtrKinds() []string {
+	return append([]string{}, collectionPtrKinds...)
+}
 
 //func Each(input interface{}, fn Iteratee) {
 //	v := reflect.ValueOf(input)

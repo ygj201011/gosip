@@ -26,9 +26,23 @@ test-watch-%:
 	cd $$GOPATH/src/$(PKG_NAME); \
 	ginkgo watch -r --randomizeAllSpecs --cover --trace --race --compilers=2 --progress $(GOFLAGS) ./$*
 
+lint:
+	golint -set_exit_status ./...
+
+lint-%:
+	golint -set_exit_status ./$*/...
+
+view-coverage: test
+	gover . full.coverprofile
+	go tool cover -html=full.coverprofile
+
+view-coverage-%:
+	make test-$*
+	go tool cover -html=./$*/$*.coverprofile
+
 format:
 	cd $$GOPATH/src/$(PKG_NAME); \
-	go fmt -w *.go
+	go fmt -w ./...
 
 run-doc-%:
 	cd $$GOPATH/src/${PKG_NAME}; \

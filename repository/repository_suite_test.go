@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/ghettovoice/gosip/collection"
+	"github.com/ghettovoice/gosip/generic"
 	. "github.com/ghettovoice/gosip/repository"
 	. "github.com/ghettovoice/gosip/test"
 	. "github.com/onsi/ginkgo"
@@ -40,11 +40,11 @@ func HaveLengthBehavior(input *behaviorInput) {
 
 func HaveItemsBehavior(input *behaviorInput) {
 	It(fmt.Sprintf("should have items: %+v", input.expectedItems), func() {
-		ExpectWithOffset(1, input.repo.Items()).To(ConsistOf(collection.Vals(input.expectedItems)))
-		ExpectWithOffset(1, input.repo.All()).To(ConsistOf(collection.Vals(input.expectedItems)))
+		ExpectWithOffset(1, input.repo.Items()).To(ConsistOf(generic.Vals(input.expectedItems)))
+		ExpectWithOffset(1, input.repo.All()).To(ConsistOf(generic.Vals(input.expectedItems)))
 	})
-	It(fmt.Sprintf("should have keys: %v", collection.Keys(input.expectedItems)), func() {
-		ExpectWithOffset(1, input.repo.Keys()).To(ConsistOf(collection.Keys(input.expectedItems)))
+	It(fmt.Sprintf("should have keys: %v", generic.Keys(input.expectedItems)), func() {
+		ExpectWithOffset(1, input.repo.Keys()).To(ConsistOf(generic.Keys(input.expectedItems)))
 	})
 }
 

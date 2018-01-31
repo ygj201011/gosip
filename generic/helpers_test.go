@@ -1,38 +1,59 @@
-package collection_test
+package generic_test
 
 import (
-	. "github.com/ghettovoice/gosip/collection"
+	. "github.com/ghettovoice/gosip/generic"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Helper", func() {
+	Context("IsPointer()", func() {
+		var s string
+		var n int
+		var slc []float32
+
+		It("should return true for pointer values", func() {
+			Expect(IsPointer(&s)).To(BeTrue())
+			Expect(IsPointer(&n)).To(BeTrue())
+			Expect(IsPointer(&slc)).To(BeTrue())
+		})
+
+		It("should return false for non pointer values", func() {
+			Expect(IsPointer(s)).To(BeFalse())
+			Expect(IsPointer(n)).To(BeFalse())
+			Expect(IsPointer(slc)).To(BeFalse())
+		})
+	})
+
 	Context("IsCollection()", func() {
-		It("should return true for array value", func() {
-			input := [...]int{1, 2, 3}
-			Expect(IsCollection(input)).To(BeTrue())
-			Expect(IsCollection(&input)).To(BeTrue())
+		It("should return true for array and pointer to array values", func() {
+			in := [...]int{1, 2, 3}
+			Expect(IsCollection(in)).To(BeTrue())
+			Expect(IsCollection(&in)).To(BeTrue())
 		})
 
-		It("should return true for slice value", func() {
-			input := []string{"q", "w", "e"}
-			Expect(IsCollection(input)).To(BeTrue())
-			Expect(IsCollection(&input)).To(BeTrue())
+		It("should return true for slice and pointer to slice values", func() {
+			in := []string{"q", "w", "e"}
+			Expect(IsCollection(in)).To(BeTrue())
+			Expect(IsCollection(&in)).To(BeTrue())
 		})
 
-		It("should return true for map value", func() {
-			input := map[int]string{1: "q", 2: "w", 3: "e"}
-			Expect(IsCollection(input)).To(BeTrue())
-			Expect(IsCollection(&input)).To(BeTrue())
+		It("should return true for map or pointer to map values", func() {
+			in := map[int]string{1: "q", 2: "w", 3: "e"}
+			Expect(IsCollection(in)).To(BeTrue())
+			Expect(IsCollection(&in)).To(BeTrue())
 		})
 
-		It("should return true for string value", func() {
-			input := "qwe"
-			Expect(IsCollection(input)).To(BeTrue())
-			Expect(IsCollection(&input)).To(BeTrue())
+		It("should return true for chan or pointer to chan values", func() {
+			in := make(chan int)
+			Expect(IsCollection(in)).To(BeTrue())
+			Expect(IsCollection(&in)).To(BeTrue())
 		})
 
-		It("should return false for non-collection value", func() {
+		It("should return false for non collection values", func() {
+			in := "qwerty"
+			Expect(IsCollection(in)).To(BeFalse())
+			Expect(IsCollection(&in)).To(BeFalse())
 			Expect(IsCollection(123)).To(BeFalse())
 			Expect(IsCollection(&struct{ id int }{123})).To(BeFalse())
 			Expect(IsCollection(func() {})).To(BeFalse())
@@ -40,12 +61,41 @@ var _ = Describe("Helper", func() {
 		})
 	})
 
+	Context("IsCollectionPointer()", func() {
+		It("should return true for pointer to array values", func() {
+			in := [...]int{1, 2, 3}
+			Expect(IsCollectionPointer(&in)).To(BeTrue())
+		})
+
+		It("should return true for pointer to slice values", func() {
+			in := []string{"q", "w", "e"}
+			Expect(IsCollectionPointer(&in)).To(BeTrue())
+		})
+
+		It("should return true for chan or pointer to chan values", func() {
+			in := make(chan int)
+			Expect(IsCollectionPointer(&in)).To(BeTrue())
+		})
+
+		It("should return false for non pointer to collection values", func() {
+			arr := [...]int{1, 2, 3}
+			slc := []string{"q", "w", "e"}
+			ch := make(chan int)
+			str := "qwerty"
+			Expect(IsCollectionPointer(arr)).To(BeFalse())
+			Expect(IsCollectionPointer(slc)).To(BeFalse())
+			Expect(IsCollectionPointer(ch)).To(BeFalse())
+			Expect(IsCollectionPointer(&str)).To(BeFalse())
+			Expect(IsCollectionPointer(true)).To(BeFalse())
+		})
+	})
+
 	Context("IsFunction()", func() {
-		It("should return true for function value", func() {
+		It("should return true for function values", func() {
 			Expect(IsFunction(func() {})).To(BeTrue())
 		})
 
-		It("should return false for non-function value", func() {
+		It("should return false for non function values", func() {
 			Expect(IsFunction(false)).To(BeFalse())
 			Expect(IsFunction(1)).To(BeFalse())
 			Expect(IsFunction("qwerty")).To(BeFalse())
@@ -53,7 +103,7 @@ var _ = Describe("Helper", func() {
 	})
 
 	Context("IsIteratee()", func() {
-		It("should return true for iteratee function", func() {
+		It("should return true for iteratee functions", func() {
 			Expect(IsIteratee(func(val int) int { return 0 })).To(BeTrue())
 			Expect(IsIteratee(func(val int) error { return nil })).To(BeTrue())
 			Expect(IsIteratee(func(val int) (int, error) { return 0, nil })).To(BeTrue())

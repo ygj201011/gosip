@@ -1,10 +1,10 @@
 package log
 
 import (
-	"fmt"
 	"regexp"
-	"runtime"
+	"strconv"
 
+	"github.com/ghettovoice/gosip/runtime"
 	"github.com/ghettovoice/logrus"
 )
 
@@ -50,22 +50,17 @@ func GetStackInfo() (string, string, string) {
 	fn := UndefStack
 
 	for depth := hookStackDelta; depth < stackNumFrames+hookStackDelta; depth++ {
-		if pc, cfile, cline, ok := runtime.Caller(depth); ok {
-			funcName := runtime.FuncForPC(pc).Name()
-
-			// Go up another stack frame if this function is in the logging package.
-			isLog, _ := regexp.MatchString(`(log\w*\..*)`, funcName)
-			if isLog {
+		if frame, ok := runtime.GetFrameOffset(depth); ok {
+			fnName := frame.Func.Name()
+			if isLog, _ := regexp.MatchString(`(log\w*\..*)`, fnName); isLog {
 				continue
 			}
 
-			// Now generate the string
-			file = cfile
-			line = fmt.Sprintf("%d", cline)
-			fn = funcName
+			file = frame.File
+			line = strconv.Itoa(frame.Line)
+			fn = fnName
 			break
 		}
-
 		// If we get here, we failed to retrieve the stack information.
 		// Just give up.
 		break
