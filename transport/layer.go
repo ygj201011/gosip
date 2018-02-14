@@ -214,13 +214,16 @@ func (tpl *layer) Send(msg core.Message) error {
 		if !ok {
 			return UnsupportedProtocolError(fmt.Sprintf("protocol %s is not supported", viaHop.Transport))
 		}
+		/*****************************************************
+			NOTE: commented due to invalid front proxy setup.
+		******************************************************/
 		// override target with values from Response headers
 		// resolve host, port from Via
-		if received, ok := viaHop.Params.Get("received"); ok {
-			target.Host = received.String()
-		} else {
-			target.Host = viaHop.Host
-		}
+		//if received, ok := viaHop.Params.Get("received"); ok {
+		//	target.Host = received.String()
+		//} else {
+		target.Host = viaHop.Host
+		//}
 
 		return protocol.Send(target, msg)
 	default:
