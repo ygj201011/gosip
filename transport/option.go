@@ -3,8 +3,8 @@ package transport
 import (
 	"net"
 
-	"github.com/ghettovoice/gosip/log"
-	"github.com/ghettovoice/gosip/sip"
+	"github.com/ygj201011/gosip/log"
+	"github.com/ygj201011/gosip/sip"
 )
 
 // TODO migrate other factories to functional arguments

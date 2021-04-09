@@ -10,10 +10,10 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/ghettovoice/gosip/sip"
-	"github.com/ghettovoice/gosip/testutils"
-	"github.com/ghettovoice/gosip/timing"
-	"github.com/ghettovoice/gosip/transport"
+	"github.com/ygj201011/gosip/sip"
+	"github.com/ygj201011/gosip/testutils"
+	"github.com/ygj201011/gosip/timing"
+	"github.com/ygj201011/gosip/transport"
 )
 
 var _ = Describe("TlsProtocol", func() {
@@ -26,7 +26,7 @@ var _ = Describe("TlsProtocol", func() {
 		wg                        *sync.WaitGroup
 	)
 
-	rootDir := testutils.GetProjectRootPath("ghettovoice/gosip")
+	rootDir := testutils.GetProjectRootPath("ygj201011/gosip")
 	network := "tcp"
 	port1 := 9061
 	port2 := port1 + 1

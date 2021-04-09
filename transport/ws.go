@@ -12,8 +12,8 @@ import (
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
 
-	"github.com/ghettovoice/gosip/log"
-	"github.com/ghettovoice/gosip/sip"
+	"github.com/ygj201011/gosip/log"
+	"github.com/ygj201011/gosip/sip"
 )
 
 var (

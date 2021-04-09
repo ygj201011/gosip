@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ghettovoice/gosip/sip"
-	"github.com/ghettovoice/gosip/sip/parser"
-	"github.com/ghettovoice/gosip/testutils"
+	"github.com/ygj201011/gosip/sip"
+	"github.com/ygj201011/gosip/sip/parser"
+	"github.com/ygj201011/gosip/testutils"
 )
 
 // Level of logs output during testing.

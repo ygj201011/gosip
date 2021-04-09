@@ -12,8 +12,8 @@ import (
 	"github.com/sirupsen/logrus"
 	prefixed "github.com/x-cray/logrus-prefixed-formatter"
 
-	"github.com/ghettovoice/gosip/log"
-	"github.com/ghettovoice/gosip/sip"
+	"github.com/ygj201011/gosip/log"
+	"github.com/ygj201011/gosip/sip"
 )
 
 func CreateStreamClientServer(network string, addr string) (net.Conn, net.Conn) {

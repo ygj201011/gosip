@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/ghettovoice/gosip/transport"
+	"github.com/ygj201011/gosip/transport"
 )
 
 var (

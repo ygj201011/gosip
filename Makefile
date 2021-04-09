@@ -25,9 +25,9 @@ test-watch-%:
 
 test-linux:
 	docker run -it --rm \
-			-v `pwd`:/go/src/github.com/ghettovoice/gosip \
+			-v `pwd`:/go/src/github.com/ygj201011/gosip \
 			-v ~/.ssh:/root/.ssh \
-			-w /go/src/github.com/ghettovoice/gosip \
+			-w /go/src/github.com/ygj201011/gosip \
 			golang:latest \
 			make install && make test
 

@@ -2,8 +2,8 @@
 
 > SIP stack in Go ([RFC 3261](https://tools.ietf.org/html/rfc3261))
 
-[![Build Status](https://travis-ci.org/ghettovoice/gosip.svg?branch=master)](https://travis-ci.org/ghettovoice/gosip)
-[![Coverage Status](https://coveralls.io/repos/github/ghettovoice/gosip/badge.svg?branch=master)](https://coveralls.io/github/ghettovoice/gosip?branch=master)
+[![Build Status](https://travis-ci.org/ygj201011/gosip.svg?branch=master)](https://travis-ci.org/ygj201011/gosip)
+[![Coverage Status](https://coveralls.io/repos/github/ygj201011/gosip/badge.svg?branch=master)](https://coveralls.io/github/ygj201011/gosip?branch=master)
 
 ## PROJECT IS UNDER DEVELOPMENT
 

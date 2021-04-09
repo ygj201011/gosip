@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/ghettovoice/gosip/log"
+	"github.com/ygj201011/gosip/log"
 )
 
 // The buffer size of the primitive input and output chans.

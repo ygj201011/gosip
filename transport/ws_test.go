@@ -12,10 +12,10 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/ghettovoice/gosip/sip"
-	"github.com/ghettovoice/gosip/testutils"
-	"github.com/ghettovoice/gosip/timing"
-	"github.com/ghettovoice/gosip/transport"
+	"github.com/ygj201011/gosip/sip"
+	"github.com/ygj201011/gosip/testutils"
+	"github.com/ygj201011/gosip/timing"
+	"github.com/ygj201011/gosip/transport"
 )
 
 var _ = Describe("WsProtocol", func() {
