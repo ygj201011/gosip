@@ -161,3 +161,4 @@ fabric.properties
 ### App rules
 out
 *.coverprofile
+examples/server/server

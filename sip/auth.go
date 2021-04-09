@@ -30,12 +30,18 @@ func AuthFromValue(value string) *Authorization {
 	matches := re.FindAllStringSubmatch(value, -1)
 	for _, match := range matches {
 		switch match[1] {
+		case "username":
+			auth.username = match[2]
 		case "realm":
 			auth.realm = match[2]
 		case "algorithm":
 			auth.algorithm = match[2]
 		case "nonce":
 			auth.nonce = match[2]
+		case "response":
+			auth.response = match[2]
+		case "uri":
+			auth.uri = match[2]
 		default:
 			auth.other[match[1]] = match[2]
 		}
@@ -66,6 +72,9 @@ func (auth *Authorization) SetPassword(password string) *Authorization {
 	auth.password = password
 
 	return auth
+}
+func (auth *Authorization) GetResponse() string {
+	return auth.response
 }
 
 func (auth *Authorization) CalcResponse() *Authorization {

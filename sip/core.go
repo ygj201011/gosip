@@ -360,6 +360,11 @@ func GenerateBranch() string {
 	}, ".")
 }
 
+// GenerateBranch returns random unique nonce.
+func GenerateNonce() string {
+	return util.RandString(32)
+}
+
 // DefaultPort returns protocol default port by network.
 func DefaultPort(protocol string) Port {
 	switch strings.ToLower(protocol) {
